@@ -1,6 +1,6 @@
-import * as tf from '@tensorflow/tfjs-node';
+﻿import * as tf from '@tensorflow/tfjs';
 import * as natural from 'natural';
-import * as sentiment from 'sentiment';
+import Sentiment from 'sentiment';
 import { logger } from '../config/logger';
 
 export interface ThreatData {
@@ -22,12 +22,12 @@ export interface ThreatScore {
 }
 
 export class AIService {
-  private sentimentAnalyzer: sentiment.SentimentAnalyzer;
-  private tokenizer: natural.WordTokenizer;
-  private model: tf.LayersModel | null = null;
+  private sentimentAnalyzer: any;
+  private tokenizer: any;
+  private model: any | null = null;
 
   constructor() {
-    this.sentimentAnalyzer = new sentiment.SentimentAnalyzer();
+    this.sentimentAnalyzer = new Sentiment();
     this.tokenizer = new natural.WordTokenizer();
   }
 
@@ -46,7 +46,9 @@ export class AIService {
     try {
       // Load pre-trained model for threat classification
       // This would typically be a custom model trained on threat data
-      this.model = await tf.loadLayersModel('file://./models/threat-classifier/model.json');
+      // In browser/JS backend, provide http(s) path or disable model load
+      // this.model = await tf.loadLayersModel('/models/threat-classifier/model.json');
+      this.model = null;
       logger.info('Threat classification model loaded');
     } catch (error) {
       logger.warn('Could not load pre-trained model, using rule-based approach');
@@ -56,7 +58,7 @@ export class AIService {
 
   async analyzeThreat(threatData: ThreatData): Promise<ThreatScore> {
     try {
-      const relevance = await this.calculateRelevance(threatData);
+      const relevance = this.calculateRelevance(threatData);
       const severity = await this.calculateSeverity(threatData);
       const confidence = await this.calculateConfidence(threatData);
       const priority = this.calculatePriority(relevance, severity, confidence);
@@ -73,9 +75,9 @@ export class AIService {
     }
   }
 
-  private async calculateRelevance(threatData: ThreatData): Promise<number> {
+  private calculateRelevance(threatData: ThreatData): number {
     try {
-      const text = ${threatData.title} .toLowerCase();
+      const text = `${threatData.title} ${threatData.description}`.toLowerCase();
       
       // Keywords that indicate high relevance
       const highRelevanceKeywords = [
@@ -107,7 +109,7 @@ export class AIService {
       });
 
       // Use sentiment analysis to adjust relevance
-      const sentimentScore = this.sentimentAnalyzer.getSentiment(text);
+      const sentimentScore = this.sentimentAnalyzer.analyze(text).score;
       if (sentimentScore < -2) {
         relevanceScore += 0.2; // Negative sentiment increases relevance
       }
@@ -121,7 +123,7 @@ export class AIService {
 
   private async calculateSeverity(threatData: ThreatData): Promise<number> {
     try {
-      const text = ${threatData.title} .toLowerCase();
+      const text = `${threatData.title} ${threatData.description}`.toLowerCase();
       
       // Severity indicators
       const criticalKeywords = ['critical', 'severe', 'high-risk', 'emergency', 'urgent'];
@@ -215,7 +217,7 @@ export class AIService {
         return relevance > 0.3;
       });
 
-      logger.info(Filtered  low-relevance threats);
+      logger.info(`Filtered ${threats.length - filteredThreats.length} low-relevance threats`);
       return filteredThreats;
     } catch (error) {
       logger.error('Error filtering noise:', error);
@@ -225,13 +227,13 @@ export class AIService {
 
   async detectPatterns(threats: ThreatData[]): Promise<any[]> {
     try {
-      const patterns = [];
+      const patterns = [] as Array<{ type: string; category: string; count: number; severity: number; timeframe: string }>;
       
       // Group threats by category
       const categoryGroups = threats.reduce((groups, threat) => {
         const category = threat.category;
         if (!groups[category]) {
-          groups[category] = [];
+          groups[category] = [] as ThreatData[];
         }
         groups[category].push(threat);
         return groups;

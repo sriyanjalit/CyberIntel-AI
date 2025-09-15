@@ -56,9 +56,11 @@ router.get('/overview', [
     };
 
     res.json({ analytics });
+    return;
   } catch (error) {
     logger.error('Error fetching analytics overview:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -97,9 +99,11 @@ router.get('/trends', [
     };
 
     res.json({ trends });
+    return;
   } catch (error) {
     logger.error('Error fetching threat trends:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -175,9 +179,11 @@ router.get('/sources', [
     };
 
     res.json({ sourceAnalytics });
+    return;
   } catch (error) {
     logger.error('Error fetching source analytics:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -231,9 +237,11 @@ router.get('/ai-performance', [
     };
 
     res.json({ aiPerformance });
+    return;
   } catch (error) {
     logger.error('Error fetching AI performance analytics:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -284,9 +292,11 @@ router.get('/correlations', [
     };
 
     res.json({ correlations });
+    return;
   } catch (error) {
     logger.error('Error fetching threat correlations:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -338,9 +348,11 @@ router.get('/response-times', [
     };
 
     res.json({ responseTimes });
+    return;
   } catch (error) {
     logger.error('Error fetching response time analytics:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -392,9 +404,11 @@ router.get('/quality', [
     };
 
     res.json({ qualityMetrics });
+    return;
   } catch (error) {
     logger.error('Error fetching quality metrics:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 

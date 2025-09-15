@@ -119,7 +119,7 @@ router.get('/', [
     const endIndex = startIndex + parseInt(limit as string);
     const paginatedThreats = filteredThreats.slice(startIndex, endIndex);
 
-    res.json({
+    return res.json({
       threats: paginatedThreats,
       pagination: {
         page: parseInt(page as string),
@@ -153,9 +153,11 @@ router.get('/:id', async (req: Request, res: Response) => {
     };
 
     res.json({ threat: mockThreat });
+    return;
   } catch (error) {
     logger.error('Error fetching threat:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -182,9 +184,11 @@ router.post('/:id/analyze', async (req: Request, res: Response) => {
       threatId: id,
       analysis 
     });
+    return;
   } catch (error) {
     logger.error('Error analyzing threat:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -272,7 +276,7 @@ router.post('/', [
     const { title, description, category, severity = 0.5, metadata = {} } = req.body;
 
     const newThreat: ThreatData = {
-      id: custom_,
+      id: `custom_${Date.now()}`,
       title,
       description,
       source: 'Custom Alert',
@@ -288,7 +292,7 @@ router.post('/', [
     // This would typically save to database
     logger.info('Custom threat alert created:', newThreat);
 
-    res.status(201).json({ 
+    return res.status(201).json({ 
       threat: newThreat,
       analysis 
     });
@@ -312,9 +316,9 @@ router.patch('/:id/status', [
     const { status, notes } = req.body;
 
     // This would typically update in database
-    logger.info(Threat  status updated to );
+    logger.info(`Threat ${id} status updated to ${status}`);
 
-    res.json({ 
+    return res.json({ 
       threatId: id,
       status,
       notes,

@@ -86,7 +86,7 @@ router.get('/', [
       permissions: user.permissions
     }));
 
-    res.json({
+    return res.json({
       users: safeUsers,
       pagination: {
         page: parseInt(page as string),
@@ -124,9 +124,11 @@ router.get('/:id', async (req: Request, res: Response) => {
     };
 
     res.json({ user: safeUser });
+    return;
   } catch (error) {
     logger.error('Error fetching user:', error);
     res.status(500).json({ error: 'Internal server error' });
+    return;
   }
 });
 
@@ -160,14 +162,14 @@ router.post('/', [
       role,
       status: 'active',
       createdAt: new Date(),
-      lastLogin: null,
+      lastLogin: new Date(),
       permissions: role === 'admin' ? ['read', 'write', 'delete', 'admin'] : 
                    role === 'analyst' ? ['read', 'write'] : ['read']
     };
 
     users.push(newUser);
 
-    logger.info(New user created:  with role );
+    logger.info(`New user created: ${newUser.email} with role ${newUser.role}`);
 
     // Remove sensitive information
     const safeUser = {
@@ -181,7 +183,7 @@ router.post('/', [
       permissions: newUser.permissions
     };
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'User created successfully',
       user: safeUser
     });
@@ -220,7 +222,7 @@ router.put('/:id', [
     }
     if (status) user.status = status;
 
-    logger.info(User updated: );
+    logger.info(`User updated: ${id}`);
 
     // Remove sensitive information
     const safeUser = {
@@ -234,7 +236,7 @@ router.put('/:id', [
       permissions: user.permissions
     };
 
-    res.json({
+    return res.json({
       message: 'User updated successfully',
       user: safeUser
     });
@@ -257,9 +259,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
     const user = users[userIndex];
     users.splice(userIndex, 1);
 
-    logger.info(User deleted: );
+    logger.info(`User deleted: ${id}`);
 
-    res.json({ message: 'User deleted successfully' });
+    return res.json({ message: 'User deleted successfully' });
   } catch (error) {
     logger.error('Error deleting user:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -286,7 +288,7 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
       }
     };
 
-    res.json({ stats });
+    return res.json({ stats });
   } catch (error) {
     logger.error('Error fetching user statistics:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -346,7 +348,7 @@ router.get('/:id/activity', [
       }
     };
 
-    res.json({ activity });
+    return res.json({ activity });
   } catch (error) {
     logger.error('Error fetching user activity:', error);
     res.status(500).json({ error: 'Internal server error' });

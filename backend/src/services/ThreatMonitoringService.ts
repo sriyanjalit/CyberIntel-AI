@@ -1,6 +1,6 @@
-import { Server as SocketIOServer } from 'socket.io';
+﻿import { Server as SocketIOServer } from 'socket.io';
 import { logger } from '../config/logger';
-import { AIService, ThreatData, ThreatScore } from './AIService';
+import { AIService, ThreatData } from './AIService';
 import { DataIngestionService } from './DataIngestionService';
 
 export interface ThreatAlert {
@@ -142,7 +142,7 @@ export class ThreatMonitoringService {
         this.broadcastPatterns(patterns);
       }
       
-      logger.info(Processed  threats, generated  alerts);
+      logger.info(`Processed ${filteredThreats.length} threats, generated ${this.alerts.size} alerts`);
     } catch (error) {
       logger.error('Error processing new threats:', error);
     }
@@ -185,7 +185,7 @@ export class ThreatMonitoringService {
         
         // Log critical alerts
         if (threatScore.severity > 0.8) {
-          logger.warn(Critical threat detected: , {
+          logger.warn(`Critical threat detected: ${threat.title}`, {
             threatId: threat.id,
             severity: threatScore.severity,
             source: threat.source
@@ -212,9 +212,9 @@ export class ThreatMonitoringService {
       const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
       
       threats.push({
-        id: ${feed.id}__,
+        id: `${feed.id}_${Date.now()}`,
         title: threatType.title,
-        description: A  has been detected in the wild. Immediate attention required.,
+        description: `A ${threatType.category} has been detected in the wild. Immediate attention required.`,
         source: feed.name,
         severity: threatType.severity,
         category: threatType.category,
@@ -231,7 +231,7 @@ export class ThreatMonitoringService {
 
   private setupSocketHandlers(): void {
     this.io.on('connection', (socket) => {
-      logger.info(Client connected to threat monitoring: );
+      logger.info(`Client connected to threat monitoring: ${socket.id}`);
       
       // Send current alerts to new client
       socket.emit('alerts', Array.from(this.alerts.values()));
@@ -251,12 +251,12 @@ export class ThreatMonitoringService {
       
       // Handle room joining for specific categories
       socket.on('join-category', (category: string) => {
-        socket.join(category_);
-        logger.info(Client  joined category: );
+        socket.join(`category_${category}`);
+        logger.info(`Client ${socket.id} joined category: ${category}`);
       });
       
       socket.on('disconnect', () => {
-        logger.info(Client disconnected from threat monitoring: );
+        logger.info(`Client disconnected from threat monitoring: ${socket.id}`);
       });
     });
   }
@@ -266,7 +266,7 @@ export class ThreatMonitoringService {
     this.io.emit('new-alert', alert);
     
     // Broadcast to specific category room
-    this.io.to(category_).emit('category-alert', alert);
+    this.io.to(`category_${alert.category}`).emit('category-alert', alert);
     
     // Broadcast to high severity alerts room
     if (alert.severity > 0.7) {
@@ -286,7 +286,7 @@ export class ThreatMonitoringService {
       this.alerts.set(alertId, alert);
       
       this.io.emit('alert-updated', alert);
-      logger.info(Alert  acknowledged by );
+      logger.info(`Alert ${alertId} acknowledged by ${userId}`);
     }
   }
 
@@ -301,12 +301,12 @@ export class ThreatMonitoringService {
       this.alerts.set(alertId, alert);
       
       this.io.emit('alert-updated', alert);
-      logger.info(Alert  status updated to  by );
+      logger.info(`Alert ${alertId} status updated to ${status} by ${userId}`);
     }
   }
 
   private generateAlertId(): string {
-    return lert__;
+    return `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   getMonitoringStats(): MonitoringStats {

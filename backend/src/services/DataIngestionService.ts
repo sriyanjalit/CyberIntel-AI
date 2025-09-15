@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as cron from 'node-cron';
 import { parseString } from 'xml2js';
@@ -9,7 +9,7 @@ export interface ThreatFeed {
   id: string;
   name: string;
   url: string;
-  type: 'rss' | 'api' | 'csv' | 'json' | 'web';
+  type: 'rss' | 'api' | 'csv' | 'json' | 'web' | 'xml';
   category: 'open_web' | 'dark_web' | 'threat_feeds';
   enabled: boolean;
   lastFetch?: Date;
@@ -19,7 +19,7 @@ export interface ThreatFeed {
 export class DataIngestionService {
   private feeds: ThreatFeed[] = [];
   private isRunning = false;
-  private fetchJobs: Map<string, cron.ScheduledTask> = new Map();
+  private fetchJobs: Map<string, any> = new Map();
 
   constructor() {
     this.initializeFeeds();
@@ -88,7 +88,7 @@ export class DataIngestionService {
       
       for (const [feedId, job] of this.fetchJobs) {
         job.stop();
-        logger.info(Stopped feed: );
+        logger.info(`Stopped feed: ${feedId}`);
       }
       
       this.fetchJobs.clear();
@@ -110,15 +110,15 @@ export class DataIngestionService {
       job.start();
       
       await this.fetchFeedData(feed);
-      logger.info(Scheduled feed:  ());
+      logger.info(`Scheduled feed: ${feed.name} (${feed.fetchInterval})`);
     } catch (error) {
-      logger.error(Failed to schedule feed :, error);
+      logger.error(`Failed to schedule feed ${feed.name}:`, error);
     }
   }
 
   private async fetchFeedData(feed: ThreatFeed): Promise<ThreatData[]> {
     try {
-      logger.info(Fetching data from ...);
+      logger.info(`Fetching data from ${feed.name}...`);
       
       let threats: ThreatData[] = [];
       
@@ -133,14 +133,14 @@ export class DataIngestionService {
           threats = await this.fetchJSONFeed(feed);
           break;
         default:
-          logger.warn(Unsupported feed type: );
+          logger.warn(`Unsupported feed type: ${feed.type}`);
       }
 
       feed.lastFetch = new Date();
-      logger.info(Fetched  threats from );
+      logger.info(`Fetched ${threats.length} threats from ${feed.name}`);
       return threats;
     } catch (error) {
-      logger.error(Error fetching data from :, error);
+      logger.error(`Error fetching data from ${feed.name}:`, error);
       return [];
     }
   }
@@ -154,9 +154,9 @@ export class DataIngestionService {
 
       const threats: ThreatData[] = [];
       
-      parseString(response.data, (err, result) => {
+      parseString(response.data, (err: any, result: any) => {
         if (err) {
-          logger.error(Error parsing RSS feed :, err);
+          logger.error(`Error parsing RSS feed ${feed.name}:`, err);
           return;
         }
 
@@ -185,7 +185,7 @@ export class DataIngestionService {
 
       return threats;
     } catch (error) {
-      logger.error(Error fetching RSS feed :, error);
+      logger.error(`Error fetching RSS feed ${feed.name}:`, error);
       return [];
     }
   }
@@ -199,9 +199,9 @@ export class DataIngestionService {
 
       const threats: ThreatData[] = [];
       
-      parseString(response.data, (err, result) => {
+      parseString(response.data, (err: any, result: any) => {
         if (err) {
-          logger.error(Error parsing XML feed :, err);
+          logger.error(`Error parsing XML feed ${feed.name}:`, err);
           return;
         }
 
@@ -210,7 +210,7 @@ export class DataIngestionService {
         for (const item of items) {
           const threat: ThreatData = {
             id: this.generateThreatId(feed.id, item.$.id),
-            title: CVE-,
+            title: `CVE-${item.$.id}`,
             description: item.summary?.[0] || '',
             source: feed.name,
             severity: this.extractCVESeverity(item),
@@ -229,7 +229,7 @@ export class DataIngestionService {
 
       return threats;
     } catch (error) {
-      logger.error(Error fetching XML feed :, error);
+      logger.error(`Error fetching XML feed ${feed.name}:`, error);
       return [];
     }
   }
@@ -263,13 +263,13 @@ export class DataIngestionService {
 
       return threats;
     } catch (error) {
-      logger.error(Error fetching JSON feed :, error);
+      logger.error(`Error fetching JSON feed ${feed.name}:`, error);
       return [];
     }
   }
 
   private generateThreatId(feedId: string, identifier: string): string {
-    return ${feedId}_;
+    return `${feedId}_${identifier}`;
   }
 
   private extractSeverityFromText(text: string): number {
@@ -301,7 +301,7 @@ export class DataIngestionService {
   }
 
   private categorizeThreat(title: string, description: string): string {
-    const text = ${title} .toLowerCase();
+    const text = `${title} ${description}`.toLowerCase();
     
     if (text.includes('cve') || text.includes('vulnerability')) {
       return 'vulnerability';
