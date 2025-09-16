@@ -5,12 +5,71 @@ import { Progress } from "@/components/ui/progress";
 import { ThreatMetrics } from "./ThreatMetrics";
 import { RealtimeThreats } from "./RealtimeThreats";
 import { ThreatMap } from "./ThreatMap";
+import { useEffect, useState } from "react";
+import { apiService, DashboardStats, ThreatAlert } from "@/services/api";
+import { socketService } from "@/services/socket";
 
 export const ThreatDashboard = () => {
-  const criticalStats = [
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentAlerts, setRecentAlerts] = useState<ThreatAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        const [statsResponse, alertsResponse] = await Promise.all([
+          apiService.getDashboardStats(),
+          apiService.getAlerts({ limit: 3 })
+        ]);
+
+        if (statsResponse.success) {
+          setStats(statsResponse.data);
+        }
+
+        if (alertsResponse.success) {
+          setRecentAlerts(alertsResponse.data);
+        }
+
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Set up real-time updates
+    socketService.setEventHandlers({
+      onStats: (newStats) => {
+        setStats(newStats);
+        setLastUpdated(new Date());
+      },
+      onNewAlert: (alert) => {
+        setRecentAlerts(prev => [alert, ...prev.slice(0, 2)]);
+        setLastUpdated(new Date());
+      },
+      onAlertUpdated: (updatedAlert) => {
+        setRecentAlerts(prev => 
+          prev.map(alert => alert.id === updatedAlert.id ? updatedAlert : alert)
+        );
+        setLastUpdated(new Date());
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socketService.removeEventHandlers();
+    };
+  }, []);
+
+  const criticalStats = stats ? [
     {
       title: "Critical Threats",
-      value: "23",
+      value: stats.criticalThreats.toString(),
       change: "+5",
       trend: "up",
       icon: AlertTriangle,
@@ -19,7 +78,7 @@ export const ThreatDashboard = () => {
     },
     {
       title: "Active Monitoring",
-      value: "1.2M",
+      value: stats.totalThreats.toString(),
       change: "+12K",
       trend: "up",
       icon: Eye,
@@ -27,8 +86,8 @@ export const ThreatDashboard = () => {
       glow: "cyber-glow"
     },
     {
-      title: "Threat Actors",
-      value: "847",
+      title: "High Threats",
+      value: stats.highThreats.toString(),
       change: "+23",
       trend: "up",
       icon: Users,
@@ -36,45 +95,45 @@ export const ThreatDashboard = () => {
       glow: "accent-glow"
     },
     {
-      title: "Mitigated",
-      value: "156",
+      title: "Medium Threats",
+      value: stats.mediumThreats.toString(),
       change: "+31",
       trend: "up",
       icon: Shield,
       color: "success",
       glow: "accent-glow"
     }
-  ];
+  ] : [];
 
-  const recentThreats = [
-    {
-      id: "CVE-2024-3400",
-      title: "Palo Alto Networks Command Injection",
-      severity: "Critical",
-      score: 9.8,
-      category: "Vulnerability",
-      time: "2 minutes ago",
-      affected: "12,847 systems"
-    },
-    {
-      id: "APT-29-2024",
-      title: "Cozy Bear Campaign targeting Financial Sector",
-      severity: "High", 
-      score: 8.2,
-      category: "APT Campaign",
-      time: "15 minutes ago",
-      affected: "Financial institutions"
-    },
-    {
-      id: "MALW-2024-001",
-      title: "BlackCat Ransomware Variant Detected",
-      severity: "High",
-      score: 7.9,
-      category: "Malware",
-      time: "1 hour ago", 
-      affected: "Healthcare sector"
-    }
-  ];
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const alertTime = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - alertTime.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} days ago`;
+  };
+
+  const getSeverityLabel = (severity: number) => {
+    if (severity >= 0.8) return "Critical";
+    if (severity >= 0.6) return "High";
+    if (severity >= 0.4) return "Medium";
+    return "Low";
+  };
+
+  const recentThreats = recentAlerts.map(alert => ({
+    id: alert.threatId,
+    title: alert.title,
+    severity: getSeverityLabel(alert.severity),
+    score: Math.round(alert.severity * 10),
+    category: alert.category,
+    time: formatTimeAgo(alert.timestamp),
+    affected: alert.metadata?.affectedSectors?.join(', ') || "Multiple sectors"
+  }));
 
   return (
     <div className="p-6 space-y-6">
@@ -89,7 +148,7 @@ export const ThreatDashboard = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Last updated: {new Date().toLocaleTimeString()}</span>
+            <span className="text-muted-foreground">Last updated: {lastUpdated.toLocaleTimeString()}</span>
           </div>
         </div>
       </div>

@@ -26,6 +26,7 @@ export class DataIngestionService {
   }
 
   private initializeFeeds(): void {
+    // Open Web Sources
     this.feeds.push({
       id: 'cve-mitre',
       name: 'CVE Database',
@@ -54,6 +55,108 @@ export class DataIngestionService {
       category: 'open_web',
       enabled: true,
       fetchInterval: '0 */2 * * *'
+    });
+
+    this.feeds.push({
+      id: 'krebs-security',
+      name: 'Krebs on Security',
+      url: 'https://krebsonsecurity.com/feed/',
+      type: 'rss',
+      category: 'open_web',
+      enabled: true,
+      fetchInterval: '0 */3 * * *'
+    });
+
+    this.feeds.push({
+      id: 'threatpost',
+      name: 'Threatpost',
+      url: 'https://threatpost.com/feed/',
+      type: 'rss',
+      category: 'open_web',
+      enabled: true,
+      fetchInterval: '0 */2 * * *'
+    });
+
+    this.feeds.push({
+      id: 'bleepingcomputer',
+      name: 'Bleeping Computer',
+      url: 'https://www.bleepingcomputer.com/feed/',
+      type: 'rss',
+      category: 'open_web',
+      enabled: true,
+      fetchInterval: '0 */2 * * *'
+    });
+
+    // Dark Web Sources (Simulated - In production, these would be actual dark web monitoring endpoints)
+    this.feeds.push({
+      id: 'dark-web-marketplace',
+      name: 'Dark Web Marketplace Monitor',
+      url: 'https://api.threatintel.example.com/darkweb/marketplaces',
+      type: 'json',
+      category: 'dark_web',
+      enabled: true,
+      fetchInterval: '0 */1 * * *' // Every hour
+    });
+
+    this.feeds.push({
+      id: 'dark-web-forums',
+      name: 'Dark Web Forums Monitor',
+      url: 'https://api.threatintel.example.com/darkweb/forums',
+      type: 'json',
+      category: 'dark_web',
+      enabled: true,
+      fetchInterval: '0 */2 * * *' // Every 2 hours
+    });
+
+    this.feeds.push({
+      id: 'dark-web-chat',
+      name: 'Dark Web Chat Channels',
+      url: 'https://api.threatintel.example.com/darkweb/channels',
+      type: 'json',
+      category: 'dark_web',
+      enabled: true,
+      fetchInterval: '0 */1 * * *' // Every hour
+    });
+
+    // Threat Intelligence Feeds
+    this.feeds.push({
+      id: 'alienvault-otx',
+      name: 'AlienVault OTX',
+      url: 'https://otx.alienvault.com/api/v1/pulses/subscribed',
+      type: 'json',
+      category: 'threat_feeds',
+      enabled: true,
+      fetchInterval: '0 */4 * * *'
+    });
+
+    this.feeds.push({
+      id: 'misp-threats',
+      name: 'MISP Threat Sharing',
+      url: 'https://misp.example.com/events/index.json',
+      type: 'json',
+      category: 'threat_feeds',
+      enabled: true,
+      fetchInterval: '0 */6 * * *'
+    });
+
+    this.feeds.push({
+      id: 'virustotal-intel',
+      name: 'VirusTotal Intelligence',
+      url: 'https://www.virustotal.com/vtapi/v2/file/report',
+      type: 'json',
+      category: 'threat_feeds',
+      enabled: true,
+      fetchInterval: '0 */2 * * *'
+    });
+
+    this.feeds.push({
+      id: 'shodan-threats',
+      name: 'Shodan Threat Intelligence',
+      url: 'https://api.shodan.io/labs/honeyscore',
+      type: 'json',
+      category: 'threat_feeds',
+      enabled: true,
+      fetchInterval: '0 */3 * * *'
     });
   }
 

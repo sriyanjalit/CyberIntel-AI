@@ -202,31 +202,89 @@ export class ThreatMonitoringService {
     const threats: ThreatData[] = [];
     
     if (Math.random() > 0.7) { // 30% chance of generating a threat
-      const threatTypes = [
-        { category: 'vulnerability', title: 'Critical RCE Vulnerability Found', severity: 0.9 },
-        { category: 'malware', title: 'New Ransomware Campaign Detected', severity: 0.8 },
-        { category: 'phishing', title: 'Sophisticated Phishing Attack', severity: 0.6 },
-        { category: 'attack', title: 'DDoS Attack on Major Infrastructure', severity: 0.7 }
-      ];
+      let threatTypes: any[] = [];
+      
+      // Different threat types based on feed category
+      if (feed.category === 'dark_web') {
+        threatTypes = [
+          { category: 'data_breach', title: 'Credit Card Data Marketplace Activity', severity: 0.9, description: 'Fresh credit card data from major retailer detected on dark web marketplace' },
+          { category: 'ransomware', title: 'New Ransomware-as-a-Service Offering', severity: 0.8, description: 'New RaaS platform advertising on dark web forums' },
+          { category: 'malware', title: 'Zero-Day Exploit Kit for Sale', severity: 0.9, description: 'Undisclosed vulnerability exploit kit being sold on dark web' },
+          { category: 'phishing', title: 'Phishing Kit Distribution', severity: 0.7, description: 'Sophisticated phishing templates being distributed' },
+          { category: 'botnet', title: 'New Botnet Infrastructure', severity: 0.8, description: 'Large-scale botnet infrastructure being advertised' },
+          { category: 'identity_theft', title: 'Identity Theft Services', severity: 0.6, description: 'Identity theft services targeting specific demographics' }
+        ];
+      } else if (feed.category === 'threat_feeds') {
+        threatTypes = [
+          { category: 'vulnerability', title: 'Critical RCE Vulnerability Found', severity: 0.9, description: 'Remote code execution vulnerability in popular software' },
+          { category: 'malware', title: 'New Ransomware Campaign Detected', severity: 0.8, description: 'Active ransomware campaign targeting healthcare sector' },
+          { category: 'phishing', title: 'Sophisticated Phishing Attack', severity: 0.6, description: 'Advanced persistent threat using spear phishing' },
+          { category: 'attack', title: 'DDoS Attack on Major Infrastructure', severity: 0.7, description: 'Large-scale DDoS attack affecting multiple services' },
+          { category: 'apt', title: 'APT Group Activity Detected', severity: 0.8, description: 'Advanced persistent threat group targeting government entities' },
+          { category: 'ioc', title: 'New Indicators of Compromise', severity: 0.6, description: 'Fresh IOCs discovered in threat intelligence feeds' }
+        ];
+      } else {
+        // Open web sources
+        threatTypes = [
+          { category: 'vulnerability', title: 'Critical RCE Vulnerability Found', severity: 0.9, description: 'Remote code execution vulnerability in popular software' },
+          { category: 'malware', title: 'New Ransomware Campaign Detected', severity: 0.8, description: 'Active ransomware campaign targeting healthcare sector' },
+          { category: 'phishing', title: 'Sophisticated Phishing Attack', severity: 0.6, description: 'Advanced persistent threat using spear phishing' },
+          { category: 'attack', title: 'DDoS Attack on Major Infrastructure', severity: 0.7, description: 'Large-scale DDoS attack affecting multiple services' }
+        ];
+      }
       
       const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
       
       threats.push({
         id: `${feed.id}_${Date.now()}`,
         title: threatType.title,
-        description: `A ${threatType.category} has been detected in the wild. Immediate attention required.`,
+        description: threatType.description,
         source: feed.name,
         severity: threatType.severity,
         category: threatType.category,
         timestamp: new Date(),
         metadata: {
           feedId: feed.id,
-          simulated: true
+          simulated: true,
+          sourceCategory: feed.category,
+          confidence: Math.random() * 0.3 + 0.7, // 70-100% confidence for simulated data
+          iocs: this.generateSimulatedIOCs(threatType.category),
+          tags: this.generateSimulatedTags(threatType.category)
         }
       });
     }
     
     return threats;
+  }
+
+  private generateSimulatedIOCs(category: string): string[] {
+    const iocTypes = {
+      'vulnerability': ['CVE-2024-XXXX', 'exploit-db.com/exploits/XXXXX'],
+      'malware': ['malware-sample.exe', '192.168.1.100', 'malicious-domain.com'],
+      'phishing': ['phishing-site.com', 'fake-login-page.net'],
+      'data_breach': ['breached-data.csv', 'leaked-credentials.txt'],
+      'ransomware': ['ransom-note.txt', 'encrypted-files.enc'],
+      'botnet': ['botnet-c2.com', '192.168.1.200'],
+      'apt': ['apt-infrastructure.net', 'command-control-server.com'],
+      'attack': ['attack-source-ip', 'ddos-botnet.net']
+    };
+    
+    return iocTypes[category] || ['unknown-ioc'];
+  }
+
+  private generateSimulatedTags(category: string): string[] {
+    const tagMap = {
+      'vulnerability': ['cve', 'exploit', 'patch-available'],
+      'malware': ['malware', 'trojan', 'backdoor'],
+      'phishing': ['phishing', 'social-engineering', 'credential-theft'],
+      'data_breach': ['data-breach', 'pii', 'financial-data'],
+      'ransomware': ['ransomware', 'encryption', 'extortion'],
+      'botnet': ['botnet', 'ddos', 'command-control'],
+      'apt': ['apt', 'nation-state', 'persistent'],
+      'attack': ['ddos', 'volumetric', 'infrastructure']
+    };
+    
+    return tagMap[category] || ['threat', 'security'];
   }
 
   private setupSocketHandlers(): void {
