@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "node simple-server.js",
-    "start": "node simple-server.js"
+    "start": "node simple-server.js",
+    "build": "node -e \"console.log('Backend build: nothing to compile (plain JS).')\""
   },
   "dependencies": {
     "express": "^4.18.2",
