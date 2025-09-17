@@ -1,74 +1,123 @@
 # AI-Powered Cyber Threat Intelligence Platform
 
-A comprehensive cybersecurity platform that provides real-time threat monitoring, AI-powered analysis, and intelligent alerting across multiple data sources.
+A modern cybersecurity dashboard with real-time threat monitoring, mock analytics APIs, and a production-ready frontend build.
 
 ## 🚀 Features
 
-- **AI/ML Engine**: Advanced threat scoring, pattern recognition, and noise filtering
-- **Real-Time Monitoring Dashboard**: Live threat detection with customized alerts
-- **Threat Graph Database**: Relationship mapping and contextual threat analysis
-- **Web-Based Interface**: Modern, responsive UI with real-time updates
-- **Multi-Source Data Ingestion**: Open Web, Dark Web, and Threat Intelligence Feeds
+- **Realtime Dashboard UI**: Responsive React + Tailwind interface and charts
+- **Mock Intelligence APIs**: Ready-made endpoints for stats and alerts
+- **Production Build**: One-command builds targeted to your domain
+- **Safe CORS**: Frontend can call backend from allowed origins only
 
-## 🛠️ Technology Stack
-
-### Backend
-- Node.js with TypeScript
-- Express.js for REST API
-- Socket.IO for real-time communication
-- PostgreSQL with Sequelize ORM
-- Redis for caching
-- TensorFlow.js for AI/ML capabilities
+## 🛠️ Tech Stack
 
 ### Frontend
-- React 18 with TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- Radix UI for components
-- Socket.IO Client for real-time updates
+- React 18 + TypeScript
+- Vite (dev server and build)
+- Tailwind CSS + Radix UI (shadcn-style components)
+- TanStack Query for data fetching/caching
 
-## 📦 Quick Start
+### Backend
+- Node.js + Express (plain JS simple server)
+- CORS configured for `http://localhost:5173` and `https://cyberintelai.co`
 
-### With Docker
+## 📦 Scripts
+
+Root `package.json`:
+
 ```bash
-git clone <repository-url>
-cd cyber-threat-intelligence-platform
-docker-compose up -d
-```
-
-### Manual Installation
-```bash
-git clone <repository-url>
-cd cyber-threat-intelligence-platform
+# Install deps (root + backend)
 npm run install:all
-npm run dev:full
+
+# Development
+npm run dev            # Frontend at http://localhost:5173
+npm run backend:start  # Backend at  http://localhost:3001
+npm run dev:full       # Run both in parallel
+
+# Lint & types
+npm run lint
+npm run type-check
+
+# Builds
+npm run backend:build  # No-op (backend is plain JS)
+npm run build          # Frontend production build → dist/
+npm run build:full     # Backend build then frontend build
+npm run build:prod:domain  # Build with API base = https://cyberintelai.co/api/v1
 ```
 
-## 📊 API Endpoints
+Backend `package.json`:
 
-- `GET /api/v1/dashboard/stats` - Real-time statistics
-- `GET /api/v1/dashboard/alerts` - Get alerts with filtering
-- `GET /api/v1/dashboard/patterns` - Threat patterns
-- `GET /api/v1/dashboard/network/:threatId` - Threat network graph
+```bash
+npm start       # node simple-server.js
+npm run dev     # same behavior, for convenience
+npm run build   # logs no-op (kept for CI symmetry)
+```
 
 ## 🔧 Configuration
 
-Create a `.env` file with your configuration:
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=cyber_threat_intelligence
-DB_USER=postgres
-DB_PASSWORD=your_password
-REDIS_HOST=localhost
-REDIS_PORT=6379
-JWT_SECRET=your_jwt_secret
+The frontend reads the API base at build-time from `VITE_API_BASE_URL`.
+
+- Development default: `http://localhost:3001/api/v1` (in code)
+- Production example build:
+
+```bash
+npm run build:prod:domain
+# Equivalent to: VITE_API_BASE_URL=https://cyberintelai.co/api/v1 npm run build
 ```
 
-## 📄 Documentation
+If you prefer an env file, create `.env.production` and add:
 
-- [Setup Guide](setup.md)
-- [API Documentation](docs/api.md)
+```env
+VITE_API_BASE_URL=https://cyberintelai.co/api/v1
+```
+
+Then run `npm run build`.
+
+## 📊 Backend API Endpoints (mock data)
+
+- `GET /health`
+- `GET /api/v1/health`
+- `GET /api/v1/dashboard/stats`
+- `GET /api/v1/dashboard/alerts`
+
+All served by `backend/simple-server.js`.
+
+## 🌐 CORS
+
+Allowed origins (backend):
+- `http://localhost:5173`
+- `https://cyberintelai.co` and `https://www.cyberintelai.co`
+
+Adjust in `backend/simple-server.js` (`allowedOrigins`) if needed.
+
+## 🧪 Quick Start
+
+```bash
+# 1) Install dependencies (root + backend)
+npm run install:all
+
+# 2) Start backend	npm run backend:start
+#    http://localhost:3001/health
+
+# 3) Start frontend	npm run dev
+#    http://localhost:5173
+```
+
+## 🚀 Production
+
+Build the frontend targeting your domain and deploy `dist/` via any static host or Nginx. Proxy `/api/` to the backend.
+
+```bash
+npm run build:full
+npm run build:prod:domain
+```
+
+High-level Nginx idea (not exhaustive):
+
+```nginx
+location /api/ { proxy_pass http://127.0.0.1:3001/; }
+location /     { try_files $uri /index.html; }
+```
 
 ## 🤝 Contributing
 
@@ -80,8 +129,8 @@ JWT_SECRET=your_jwt_secret
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+MIT
 
 ---
 
-**Built with ❤️ by the Cyber Threat Intelligence Team**
+Built with ❤️ by the Cyber Threat Intelligence Team
